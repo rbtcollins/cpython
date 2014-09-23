@@ -1648,7 +1648,11 @@ Loading and running tests
 
       If a package (a directory containing a file named :file:`__init__.py`) is
       found, the package will be checked for a ``load_tests`` function. If this
-      exists then it will be called with *loader*, *tests*, *pattern*.
+      exists then it will be called with (*loader*, *tests*, *pattern*) unless
+      the package has already had ``load_tests`` called from the same discovery
+      invocation, in which case the package module object is not scanned for
+      tests at all: this ensures that when a package uses discovery to find
+      tests within it that we do not reenter back into the same ``load_tests``.
 
       If ``load_tests`` exists then discovery does *not* recurse into the
       package, ``load_tests`` is responsible for loading all tests in the
@@ -1675,6 +1679,8 @@ Loading and running tests
          Found packages are now checked for ``load_tests`` regardless of
          whether their path matches *pattern*, because it is impossible for
          a package name to match the default pattern.
+         ``load_tests`` are now honoured in the package that ``start_dir``
+         points at, not just in child packages.
 
 
    The following attributes of a :class:`TestLoader` can be configured either by

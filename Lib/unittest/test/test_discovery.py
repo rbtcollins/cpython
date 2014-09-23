@@ -368,6 +368,60 @@ class TestDiscovery(unittest.TestCase):
         self.assertEqual(_find_tests_args, [(start_dir, 'pattern')])
         self.assertIn(top_level_dir, sys.path)
 
+    def test_discover_start_dir_is_package_calls_package_load_tests(self):
+        # This test verifies that the package load_tests in a package is indeed
+        # invoked when the start_dir is a package (and not the top level).
+        # http://bugs.python.org/issue22457
+        original_listdir = os.listdir
+        def restore_listdir():
+            os.listdir = original_listdir
+        self.addCleanup(restore_listdir)
+        original_isfile = os.path.isfile
+        def restore_isfile():
+            os.path.isfile = original_isfile
+        self.addCleanup(restore_isfile)
+        original_isdir = os.path.isdir
+        def restore_isdir():
+            os.path.isdir = original_isdir
+        self.addCleanup(restore_isdir)
+        self.addCleanup(sys.path.remove, abspath('/toplevel'))
+
+        # Test data: we expect the following:
+        # an isfile to verify the package, then importing and scanning
+        # as per _find_tests' normal behaviour.
+        # We expect to see our load_tests hook called once.
+        vfs = {abspath('/toplevel'): ['startdir'],
+               abspath('/toplevel/startdir'): ['__init__.py']}
+        def list_dir(path):
+            return list(vfs[path])
+        os.listdir = list_dir
+        os.path.isdir = lambda path: not path.endswith('.py')
+        os.path.isfile = lambda path: path.endswith('.py')
+
+        class Module(object):
+            paths = []
+            load_tests_args = []
+
+            def __init__(self, path):
+                self.path = path
+
+            def load_tests(self, loader, tests, pattern):
+                return ['load_tests called ' + self.path]
+
+            def __eq__(self, other):
+                return self.path == other.path
+
+        loader = unittest.TestLoader()
+        loader._get_module_from_name = lambda name: Module(name)
+        loader.suiteClass = lambda thing: thing
+
+        suite = loader.discover('/toplevel/startdir', top_level_dir='/toplevel')
+
+        # We should have loaded tests from the package __init__.
+        # (normally this would be nested TestSuites.)
+        self.assertEqual(suite,
+                         [['load_tests called startdir']])
+
     def setup_import_issue_tests(self, fakefile):
         listdir = os.listdir
         os.listdir = lambda _: [fakefile]

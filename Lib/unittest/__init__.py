@@ -67,3 +67,11 @@ from .signals import installHandler, registerResult, removeResult, removeHandler
 
 # deprecated
 _TextTestResult = TextTestResult
+
+# There are no tests here, so don't try to run anything discovered from
+# introspecting the symbols we export for backwards comapt.
+def load_tests(loader, tests, pattern):
+    import os.path
+    # top level directory cached on loader instance
+    this_dir = os.path.dirname(__file__)
+    return loader.discover(start_dir=this_dir, pattern=pattern)
