@@ -1033,6 +1033,8 @@ Library
 - Issue #21323: Fix http.server to again handle scripts in CGI subdirectories,
   broken by the fix for security issue #19435.  Patch by Zach Byrne.
 
+- Issue #17401: Include closefd in io.FileIO repr.
+
 IDLE
 ----
 
