@@ -1,6 +1,7 @@
 import datetime
 import warnings
 import weakref
+import sys
 import unittest
 from itertools import product
 
@@ -98,6 +99,10 @@ class Test_Assertions(unittest.TestCase):
         else:
             self.fail("assertRaises() didn't let exception pass through")
 
+    @unittest.skipIf(
+        getattr(sys, 'pypy_version_info', None),
+        "pypy doesn't use refcounting."
+        )
     def test_assertRaises_frames_survival(self):
         # Issue #9815: assertRaises should avoid keeping local variables
         # in a traceback alive.

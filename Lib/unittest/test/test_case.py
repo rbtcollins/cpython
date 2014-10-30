@@ -1,5 +1,6 @@
 import contextlib
 import difflib
+import gc
 import pprint
 import pickle
 import re
@@ -1565,6 +1566,7 @@ test case
         for method_name in ('test1', 'test2'):
             testcase = TestCase(method_name)
             testcase.run()
+            gc.collect()
             self.assertEqual(MyException.ninstance, 0)
 
 
